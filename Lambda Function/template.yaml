@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  StreamingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./src
+      DockerTag: v1
+    Properties:
+      PackageType: Image
+      Timeout: 120
+      MemorySize: 3072
+      Environment:
+        Variables:
+          LANGCHAIN_TRACING_V2: "true"
+          LANGCHAIN_ENDPOINT: https://api.smith.langchain.com
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: '*'
+  StreamingFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      InvokeMode: RESPONSE_STREAM
+      TargetFunctionArn:
+        Ref: StreamingFunction
+      Cors:
+        AllowOrigins:
+          - '*'
+  StreamingFunctionPublicAccess:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName:
+        Ref: StreamingFunction
+      FunctionUrlAuthType: NONE
+      Principal: '*'
+Outputs:
+  ResponseLambdaUrl:
+    Value:
+      Fn::GetAtt:
+        - StreamingFunctionUrl
+        - FunctionUrl
