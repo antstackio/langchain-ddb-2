@@ -52,7 +52,7 @@ if st.button("Send Request"):
 
     # Retrieve chat history from DDB
     dynamodb = boto3.client('dynamodb')
-    response = dynamodb.get_item(TableName='car-gpt-tst', Key={'user_id': {'S': user}, 'session_id': {'S': session}})
+    response = dynamodb.get_item(TableName='lchain-ddb', Key={'user_id': {'S': user}, 'session_id': {'S': session}})
     messages = response['Item']['History']['L']
     with st.expander("Chat History"):
         for message in reversed(messages):
